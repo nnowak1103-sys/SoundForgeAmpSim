@@ -8,26 +8,28 @@ on:
 
 jobs:
   build:
-    name: Build Windows
     runs-on: windows-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Show Environment
-        run: |
-          echo "Windows build started"
-          echo "Repository: ${{ github.repository }}"
-          echo "Branch: ${{ github.ref_name }}"
+      - name: Configure CMake
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 
-      - name: List Repository Files
+      - name: Build Release
+        run: cmake --build build --config Release
+
+      - name: Collect Artifacts
         shell: pwsh
         run: |
-          Get-ChildItem -Recurse
+          New-Item -ItemType Directory -Force -Path artifacts
+          Get-ChildItem -Recurse build -Include *.exe,*.vst3,*.dll,*.pdb | Copy-Item -Destination artifacts -Recurse -Force
 
-      - name: Upload Repository Listing
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: repository-files
-          path: .
+          name: SoundForgeAmpSim-Windows
+          path: artifacts
