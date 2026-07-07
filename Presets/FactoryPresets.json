@@ -1,5 +1,7 @@
 [
-  { "name": "Modern Recto Rhythm", "gain": 7.8, "bass": 6.5, "mid": 3.8, "treble": 6.2, "presence": 6.0, "master": 0.75 },
-  { "name": "British JCM Crunch", "gain": 5.8, "bass": 5.0, "mid": 7.2, "treble": 6.4, "presence": 5.5, "master": 0.75 },
-  { "name": "American Clean", "gain": 2.0, "bass": 5.5, "mid": 5.0, "treble": 6.0, "presence": 4.5, "master": 0.85 }
+  {"name":"Recto Modern Rhythm","model":"Mesa Rectifier","cab":"Modern 4x12","drive":0.72,"bass":0.58,"mid":0.42,"treble":0.64,"presence":0.60,"resonance":0.55,"screamer":0.35,"delay":0.0,"reverb":0.08},
+  {"name":"JCM Hot Crunch","model":"Marshall JCM","cab":"Vintage 2x12","drive":0.60,"bass":0.48,"mid":0.68,"treble":0.61,"presence":0.55,"screamer":0.10,"reverb":0.07},
+  {"name":"Bogner Lead Glass","model":"Bogner Ecstasy","cab":"Bright Mix","drive":0.66,"bass":0.52,"mid":0.62,"treble":0.57,"presence":0.62,"delay":0.22,"reverb":0.16},
+  {"name":"Soldano Smooth Lead","model":"Soldano SLO","cab":"Modern 4x12","drive":0.70,"bass":0.50,"mid":0.58,"treble":0.55,"presence":0.57,"delay":0.18,"reverb":0.12},
+  {"name":"Vox Clean Space","model":"Vox/Fender Glass","cab":"Open 1x12","drive":0.20,"bass":0.48,"mid":0.52,"treble":0.67,"presence":0.62,"chorus":0.16,"delay":0.14,"reverb":0.24}
 ]
