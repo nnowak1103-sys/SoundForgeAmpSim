@@ -1,59 +1,59 @@
 #include "PluginEditor.h"
 
-SoundForgeAmpSimAudioProcessorEditor::SoundForgeAmpSimAudioProcessorEditor(SoundForgeAmpSimAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor(p)
+SoundForgeAmpSimAudioProcessorEditor::SoundForgeAmpSimAudioProcessorEditor (SoundForgeAmpSimAudioProcessor& p)
+    : AudioProcessorEditor (&p), processor (p)
 {
-    setSize(980, 520);
-    addKnob("input", "Input");
-    addKnob("gain", "Gain");
-    addKnob("bass", "Bass");
-    addKnob("mid", "Mid");
-    addKnob("treble", "Treble");
-    addKnob("tone", "Tone");
-    addKnob("presence", "Presence");
-    addKnob("gate", "Gate");
-    addKnob("cab", "Cab");
-    addKnob("master", "Master");
+    modelBox.addItemList ({"Clean", "British JCM", "Recto Modern", "Boutique Lead"}, 1);
+    addAndMakeVisible (modelBox);
+    modelAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (processor.apvts, "model", modelBox);
+
+    addKnob ("input", "Input"); addKnob ("drive", "Drive"); addKnob ("bass", "Bass"); addKnob ("mid", "Mid");
+    addKnob ("treble", "Treble"); addKnob ("tone", "Tone"); addKnob ("presence", "Presence"); addKnob ("master", "Master"); addKnob ("gate", "Gate");
+    setSize (920, 440);
 }
 
-void SoundForgeAmpSimAudioProcessorEditor::addKnob(const juce::String& parameterId, const juce::String& labelText)
+void SoundForgeAmpSimAudioProcessorEditor::addKnob (const juce::String& paramId, const juce::String& labelText)
 {
     auto slider = std::make_unique<juce::Slider>();
-    slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider->setTextBoxStyle(juce::Slider::TextBoxBelow, false, 74, 20);
+    slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    slider->setTextBoxStyle (juce::Slider::TextBoxBelow, false, 76, 20);
+    addAndMakeVisible (*slider);
+
     auto label = std::make_unique<juce::Label>();
-    label->setText(labelText, juce::dontSendNotification);
-    label->setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(*slider);
-    addAndMakeVisible(*label);
-    attachments.push_back(std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processor.parameters, parameterId, *slider));
-    sliders.push_back(std::move(slider));
-    labels.push_back(std::move(label));
+    label->setText (labelText, juce::dontSendNotification);
+    label->setJustificationType (juce::Justification::centred);
+    label->setColour (juce::Label::textColourId, juce::Colours::white);
+    addAndMakeVisible (*label);
+
+    attachments.push_back (std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (processor.apvts, paramId, *slider));
+    knobs.push_back (std::move (slider)); labels.push_back (std::move (label));
 }
 
-void SoundForgeAmpSimAudioProcessorEditor::paint(juce::Graphics& g)
+void SoundForgeAmpSimAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xff141414));
-    g.setColour(juce::Colour(0xfff2d08a));
-    g.setFont(32.0f);
-    g.drawText("SoundForge Amp Sim", 24, 18, getWidth() - 48, 44, juce::Justification::centredLeft);
-    g.setColour(juce::Colour(0xff272727));
-    g.fillRoundedRectangle(24.0f, 86.0f, static_cast<float>(getWidth() - 48), 340.0f, 18.0f);
+    g.fillAll (juce::Colour (0xff111215));
+    auto r = getLocalBounds().reduced (18);
+    g.setColour (juce::Colour (0xff20242b));
+    g.fillRoundedRectangle (r.toFloat(), 18.0f);
+    g.setColour (juce::Colours::white);
+    g.setFont (juce::FontOptions (30.0f, juce::Font::bold));
+    g.drawText ("SoundForge Amp Sim", 34, 24, 420, 48, juce::Justification::left);
+    g.setFont (juce::FontOptions (14.0f));
+    g.setColour (juce::Colour (0xffbfc7d5));
+    g.drawText ("Milestone 1: native JUCE standalone + VST3 amp simulator", 38, 70, 620, 24, juce::Justification::left);
 }
 
 void SoundForgeAmpSimAudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds().reduced(34);
-    area.removeFromTop(92);
-    const int knobW = 88;
-    const int gap = 8;
-    int x = area.getX() + 20;
-    int y = area.getY() + 60;
-
-    for (size_t i = 0; i < sliders.size(); ++i)
+    modelBox.setBounds (650, 36, 220, 30);
+    auto area = getLocalBounds().reduced (34).withTrimmedTop (95);
+    const int w = 92, h = 116, gap = 8;
+    int x = area.getX(); int y = area.getY();
+    for (size_t i = 0; i < knobs.size(); ++i)
     {
-        labels[i]->setBounds(x, y - 26, knobW, 22);
-        sliders[i]->setBounds(x, y, knobW, 112);
-        x += knobW + gap;
+        knobs[i]->setBounds (x, y + 22, w, 88);
+        labels[i]->setBounds (x, y, w, 22);
+        x += w + gap;
+        if (x + w > area.getRight()) { x = area.getX(); y += h + 10; }
     }
 }

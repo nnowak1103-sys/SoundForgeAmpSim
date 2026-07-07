@@ -1,12 +1,13 @@
 #pragma once
 #include <JuceHeader.h>
-#include "AmpDSP.h"
+#include "DSP/AmpEngine.h"
+#include "DSP/PresetManager.h"
 
-class SoundForgeAmpSimAudioProcessor : public juce::AudioProcessor
+class SonicForgeAudioProcessor final : public juce::AudioProcessor
 {
 public:
-    SoundForgeAmpSimAudioProcessor();
-    ~SoundForgeAmpSimAudioProcessor() override = default;
+    SonicForgeAudioProcessor();
+    ~SonicForgeAudioProcessor() override = default;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -16,11 +17,11 @@ public:
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
 
-    const juce::String getName() const override { return JucePlugin_Name; }
+    const juce::String getName() const override { return "SonicForge Pro Amp Sim"; }
     bool acceptsMidi() const override { return false; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 0.0; }
+    double getTailLengthSeconds() const override { return 2.0; }
 
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
@@ -31,10 +32,11 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    juce::AudioProcessorValueTreeState apvts;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    juce::AudioProcessorValueTreeState apvts;
+    SonicForge::AmpEngine engine;
+    SonicForge::PresetManager presetManager;
 
 private:
-    AmpDSP amp;
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SoundForgeAmpSimAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SonicForgeAudioProcessor)
 };

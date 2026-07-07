@@ -2,94 +2,73 @@
 #include "PluginEditor.h"
 
 SoundForgeAmpSimAudioProcessor::SoundForgeAmpSimAudioProcessor()
-    : AudioProcessor(BusesProperties()
-        .withInput("Input", juce::AudioChannelSet::stereo(), true)
-        .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      parameters(*this, nullptr, "PARAMETERS", createParameterLayout())
+    : AudioProcessor (BusesProperties().withInput ("Input", juce::AudioChannelSet::stereo(), true)
+                                      .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
+      apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout SoundForgeAmpSimAudioProcessor::createParameterLayout()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-    auto addFloat = [&](const juce::String& id, const juce::String& name, float min, float max, float def)
-    {
-        params.push_back(std::make_unique<juce::AudioParameterFloat>(id, name, juce::NormalisableRange<float>(min, max), def));
-    };
-
-    addFloat("input", "Input", 0.0f, 2.0f, 1.0f);
-    addFloat("gain", "Gain", 0.0f, 10.0f, 4.0f);
-    addFloat("bass", "Bass", 0.0f, 10.0f, 5.0f);
-    addFloat("mid", "Mid", 0.0f, 10.0f, 5.0f);
-    addFloat("treble", "Treble", 0.0f, 10.0f, 5.0f);
-    addFloat("tone", "Tone", 0.0f, 10.0f, 5.0f);
-    addFloat("presence", "Presence", 0.0f, 10.0f, 5.0f);
-    addFloat("master", "Master Volume", 0.0f, 1.5f, 0.75f);
-    addFloat("gate", "Noise Gate", -90.0f, -20.0f, -65.0f);
-    addFloat("cab", "Cab Blend", 0.0f, 1.0f, 0.8f);
-
+    params.push_back (std::make_unique<juce::AudioParameterChoice> ("model", "Amp Model", juce::StringArray {"Clean", "British JCM", "Recto Modern", "Boutique Lead"}, 2));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("input", "Input", juce::NormalisableRange<float> (-24.0f, 24.0f, 0.1f), 0.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("drive", "Drive", 0.0f, 1.0f, 0.55f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("bass", "Bass", 0.0f, 1.0f, 0.55f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("mid", "Mid", 0.0f, 1.0f, 0.50f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("treble", "Treble", 0.0f, 1.0f, 0.60f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("tone", "Cab Tone", 0.0f, 1.0f, 0.52f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("presence", "Presence", 0.0f, 1.0f, 0.55f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("master", "Master", juce::NormalisableRange<float> (-60.0f, 6.0f, 0.1f), -12.0f));
+    params.push_back (std::make_unique<juce::AudioParameterFloat> ("gate", "Gate", juce::NormalisableRange<float> (-90.0f, -20.0f, 0.1f), -65.0f));
     return { params.begin(), params.end() };
 }
 
-bool SoundForgeAmpSimAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+void SoundForgeAmpSimAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    const auto& mainIn = layouts.getMainInputChannelSet();
-    const auto& mainOut = layouts.getMainOutputChannelSet();
-    return mainIn == mainOut && (mainOut == juce::AudioChannelSet::mono() || mainOut == juce::AudioChannelSet::stereo());
+    amp.prepare (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
 }
 
-void SoundForgeAmpSimAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+bool SoundForgeAmpSimAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-    juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32>(samplesPerBlock), static_cast<juce::uint32>(getTotalNumOutputChannels()) };
-    amp.prepare(spec);
-    toneStack.prepare(spec);
-    cabinet.prepare(spec);
-    gate.prepare(spec);
+    return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::mono()
+        || layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
 
-void SoundForgeAmpSimAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+void SoundForgeAmpSimAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
-    buffer.clear(getTotalNumInputChannels(), buffer.getNumSamples(), getTotalNumOutputChannels() - getTotalNumInputChannels());
+    for (int ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
+        buffer.clear (ch, 0, buffer.getNumSamples());
 
-    const float input = parameters.getRawParameterValue("input")->load();
-    const float gain = parameters.getRawParameterValue("gain")->load();
-    const float bass = parameters.getRawParameterValue("bass")->load();
-    const float mid = parameters.getRawParameterValue("mid")->load();
-    const float treble = parameters.getRawParameterValue("treble")->load();
-    const float tone = parameters.getRawParameterValue("tone")->load();
-    const float presence = parameters.getRawParameterValue("presence")->load();
-    const float master = parameters.getRawParameterValue("master")->load();
-    const float gateDb = parameters.getRawParameterValue("gate")->load();
-    const float cabBlend = parameters.getRawParameterValue("cab")->load();
-
-    buffer.applyGain(input);
-    gate.setThresholdDb(gateDb);
-    gate.process(buffer);
-    amp.setDrive(gain);
-    amp.process(buffer);
-    toneStack.setControls(bass, mid, treble, tone, presence);
-    toneStack.process(buffer);
-    cabinet.setBlend(cabBlend);
-    cabinet.process(buffer);
-    buffer.applyGain(master);
-}
-
-void SoundForgeAmpSimAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
-{
-    if (auto xml = parameters.copyState().createXml())
-        copyXmlToBinary(*xml, destData);
-}
-
-void SoundForgeAmpSimAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
-{
-    if (auto xml = getXmlFromBinary(data, sizeInBytes))
-        parameters.replaceState(juce::ValueTree::fromXml(*xml));
+    amp.process (buffer,
+                 apvts.getRawParameterValue ("input")->load(),
+                 apvts.getRawParameterValue ("drive")->load(),
+                 apvts.getRawParameterValue ("bass")->load(),
+                 apvts.getRawParameterValue ("mid")->load(),
+                 apvts.getRawParameterValue ("treble")->load(),
+                 apvts.getRawParameterValue ("tone")->load(),
+                 apvts.getRawParameterValue ("presence")->load(),
+                 apvts.getRawParameterValue ("master")->load(),
+                 apvts.getRawParameterValue ("gate")->load(),
+                 static_cast<int> (apvts.getRawParameterValue ("model")->load()));
 }
 
 juce::AudioProcessorEditor* SoundForgeAmpSimAudioProcessor::createEditor()
 {
-    return new SoundForgeAmpSimAudioProcessorEditor(*this);
+    return new SoundForgeAmpSimAudioProcessorEditor (*this);
+}
+
+void SoundForgeAmpSimAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+{
+    if (auto xml = apvts.copyState().createXml())
+        copyXmlToBinary (*xml, destData);
+}
+
+void SoundForgeAmpSimAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+{
+    if (auto xml = getXmlFromBinary (data, sizeInBytes))
+        apvts.replaceState (juce::ValueTree::fromXml (*xml));
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

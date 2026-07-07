@@ -1,66 +1,40 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-
-set ROOT=%~dp0..
-cd /d "%ROOT%"
-
+cd /d "%~dp0.."
 if not exist logs mkdir logs
 for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HH-mm-ss"') do set TS=%%i
-set MAINLOG=%ROOT%\logs\Build_%TS%.log
-set ERRLOG=%ROOT%\logs\Errors_%TS%.log
-set ENVLOG=%ROOT%\logs\Environment_%TS%.log
+set MAINLOG=logs\Build_%TS%.log
+set ERRLOG=logs\Errors_%TS%.log
 
-call :log "SoundForge Amp Sim Windows Release Build"
-call :log "Root: %ROOT%"
-call :log "Main log: %MAINLOG%"
+echo SoundForge Amp Sim Windows Build > "%MAINLOG%"
+echo Started %DATE% %TIME% >> "%MAINLOG%"
 
 echo ---- Environment diagnostics ----
-(
-  echo Date: %DATE% %TIME%
-  echo Computer: %COMPUTERNAME%
-  echo User: %USERNAME%
-  ver
-  echo PATH=%PATH%
-  where cmake
-  cmake --version
-  where git
-  git --version
-) > "%ENVLOG%" 2>&1
+where cmake >> "%MAINLOG%" 2>> "%ERRLOG%" || goto missing_cmake
+cmake --version >> "%MAINLOG%" 2>> "%ERRLOG%"
+where git >> "%MAINLOG%" 2>> "%ERRLOG%"
 
-if errorlevel 1 (
-  call :fail "Missing required tool: cmake or git. Install tools for local builds, or use GitHub Actions."
-)
+echo ---- Configure ----
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 >> "%MAINLOG%" 2>> "%ERRLOG%" || goto fail
 
-call :run "Configure CMake" cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-call :run "Build Release" cmake --build build --config Release --parallel
+echo ---- Build Release ----
+cmake --build build --config Release --parallel >> "%MAINLOG%" 2>> "%ERRLOG%" || goto fail
 
-if not exist dist mkdir dist
-xcopy /Y /E /I "build\SoundForgeAmpSim_artefacts\Release" "dist" >> "%MAINLOG%" 2>&1
-
-call :log "BUILD SUCCESS"
-echo Build completed. Logs are in logs\
+echo BUILD SUCCESS >> "%MAINLOG%"
+echo Build complete. See %MAINLOG%
 pause
 exit /b 0
 
-:run
-set STEP=%~1
-shift
-call :log "---- %STEP% ----"
-%* >> "%MAINLOG%" 2>> "%ERRLOG%"
-if errorlevel 1 call :fail "%STEP% failed"
-exit /b 0
-
-:log
-echo %~1
-echo %~1 >> "%MAINLOG%"
-exit /b 0
+:missing_cmake
+echo ERROR: Missing required tool: cmake >> "%ERRLOG%"
+echo ERROR: Missing required tool: cmake
+echo Use GitHub Actions for a no-local-tools build, or install CMake for local builds.
+echo Logs: %MAINLOG% and %ERRLOG%
+pause
+exit /b 1
 
 :fail
-echo ERROR: %~1
-echo ERROR: %~1 >> "%MAINLOG%"
-echo ERROR: %~1 >> "%ERRLOG%"
-echo.
-echo BUILD FAILED. Main log: %MAINLOG%
-echo Error log: %ERRLOG%
+echo BUILD FAILED >> "%MAINLOG%"
+echo Build failed. See %MAINLOG% and %ERRLOG%
 pause
 exit /b 1

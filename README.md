@@ -1,32 +1,36 @@
-# SoundForge Amp Sim
+# SoundForge Amp Sim - Engineering Milestone 1
 
-Native C++/JUCE starter project for a standalone amp simulator and VST3 plugin.
+This is a real native JUCE/CMake starter project for a guitar amp simulator.
 
-## What this is
+## What it builds
 
-This repository is structured so GitHub Actions can build on Windows without requiring your personal PC to install CMake, Visual Studio, JUCE, or Python.
+- Standalone Windows app
+- VST3 plugin
+- JUCE audio device support
+- Basic amp DSP with gain, tone stack, cab-style low pass, gate, and master volume
+- Four starter amp models: Clean, British JCM, Recto Modern, Boutique Lead
 
-## Start here
+## Recommended no-local-tools build
 
-1. Upload this repository contents to GitHub.
-2. Confirm this file exists at the repository root:
+1. Upload the contents of this folder to your GitHub repository root.
+2. Make sure this file exists in GitHub:
 
 ```text
 .github/workflows/windows-release.yml
 ```
 
-3. Go to **Actions** in GitHub.
+3. Open the **Actions** tab.
 4. Run **Windows Release Build**.
-5. Download the build artifacts from the completed run.
+5. Download the artifact named `SoundForgeAmpSim-Windows-M1`.
 
-## Local build
+## Local Windows build
 
-Local builds are optional. If you build locally, you need CMake and Visual Studio Build Tools.
+Requires CMake and Visual Studio 2022 with Desktop C++ workload.
 
 ```bat
 scripts\build_windows_release.bat
 ```
 
-## Notes
+## Roadmap
 
-This is a professional native project skeleton with working CI/build structure and starter DSP architecture. Final commercial amp-model quality requires iterative DSP development, testing, IR assets, UI art, and plugin validation.
+Milestone 2 will add an IR cabinet loader, better oversampled nonlinear stages, preset saving/loading UI, and proper installer packaging.

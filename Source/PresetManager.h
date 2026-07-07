@@ -1,3 +1,14 @@
 #pragma once
 #include <JuceHeader.h>
-namespace soundforge { class PresetManager {}; }
+
+struct FactoryPreset
+{
+    juce::String name;
+    std::map<juce::String, float> values;
+};
+
+class PresetManager
+{
+public:
+    static std::vector<FactoryPreset> factoryPresets();
+};
