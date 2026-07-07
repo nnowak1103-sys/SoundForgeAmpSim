@@ -1,0 +1,41 @@
+{
+  "factoryPresets": [
+    {
+      "name": "Modern Recto Rhythm",
+      "amp": "US Rectifier",
+      "gain": 6.7,
+      "bass": 5.8,
+      "mid": 3.8,
+      "treble": 6.3,
+      "presence": 5.6,
+      "resonance": 5.2
+    },
+    {
+      "name": "British 800 Crunch",
+      "amp": "British JCM",
+      "gain": 5.2,
+      "bass": 4.8,
+      "mid": 6.4,
+      "treble": 5.9,
+      "presence": 5.1
+    },
+    {
+      "name": "Bogner Saturated Lead",
+      "amp": "Bogner Modern",
+      "gain": 7.3,
+      "bass": 5.1,
+      "mid": 5.8,
+      "treble": 5.4,
+      "presence": 4.8
+    },
+    {
+      "name": "Blackface Pedal Clean",
+      "amp": "Blackface Clean",
+      "gain": 2.1,
+      "bass": 4.6,
+      "mid": 4.2,
+      "treble": 6.8,
+      "presence": 4.5
+    }
+  ]
+}
