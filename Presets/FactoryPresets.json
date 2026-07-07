@@ -1,0 +1,5 @@
+[
+  { "name": "Modern Recto Rhythm", "gain": 7.8, "bass": 6.5, "mid": 3.8, "treble": 6.2, "presence": 6.0, "master": 0.75 },
+  { "name": "British JCM Crunch", "gain": 5.8, "bass": 5.0, "mid": 7.2, "treble": 6.4, "presence": 5.5, "master": 0.75 },
+  { "name": "American Clean", "gain": 2.0, "bass": 5.5, "mid": 5.0, "treble": 6.0, "presence": 4.5, "master": 0.85 }
+]
